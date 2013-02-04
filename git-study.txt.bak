@@ -32,30 +32,3 @@ git commit -a
 git push origin master
 修改后的file discard
 git checkout Readme
-
-
-#添加公钥
-eval `ssh-agent`
-ssh-add /c/id_rsa
-
-
-#克隆代码
-git clone
-
-
-
-#下载代码
-git pull
-
-#添加文件
-git add .
-
-#提交修改
-git commit -a -m "fsdlfjs"  #随便输入一些信息
-
-#上传代码
-git push
-
-#ssh 连接
-ssh 9c5a912cba6b4f35b75069dec7ec9f21@cloudplatform-lgl.demo.com
-
