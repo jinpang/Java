@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+xmlns="http://www.springframework.org/schema/beans"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+<!-- 连接MySQL-->
+<property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+<property name="url" value="jdbc:mysql://localhost:3306/mytest"></property>
+<property name="username" value="root"></property>
+<property name="password" value="root"></property>
+
+<!-- 连接Oracle
+<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"></property>
+<property name="url" value="jdbc:oracle:thin:@localhost:1521:orcl"></property>
+<property name="username" value="scott"></property>
+<property name="password" value="tiger"></property>
+-->
+<!-- 连接SQL Server
+<property name="driverClassName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"></property>
+<property name="url" value="jdbc:sqlserver://localhost:1433;databaseName=test"></property>
+<property name="username" value="sa"></property>
+<property name="password" value="yuji"></property>
+-->
+<property name="maxActive" value="100"></property>
+<property name="maxIdle" value="30"></property>
+<property name="maxWait" value="500"></property>
+<property name="defaultAutoCommit" value="true"></property>
+</bean>
+
+<bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+<property name="dataSource" ref="dataSource"></property>
+<property name="hibernateProperties">
+<props>
+<!-- MySQL的方言-->
+<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+
+<!-- Oracle的方言
+<prop key="hibernate.dialect">org.hibernate.dialect.OracleDialect</prop>
+-->
+<!-- SQL Server的方言
+<prop key="hibernate.dialect">org.hibernate.dialect.SQLServerDialect</prop>
+-->
+<prop key="hibernate.show_sql">true</prop>
+</props>
+</property>
+<property name="mappingResources">
+<list>
+<value>com/test/bean/User.hbm.xml</value>
+</list>
+</property>
+</bean>
+
+<bean id="userDao" class="com.test.dao.impl.UserDAOImpl" scope="singleton">
+<property name="sessionFactory">
+<ref bean="sessionFactory"/>
+</property>
+</bean>
+
+<bean id="userService" class="com.test.service.impl.UserServiceImpl">
+<property name="userDao" ref="userDao"></property>
+</bean>
+
+<bean id="saveUserAction" class="com.test.action.user.SaveUserAction" scope="prototype">
+<property name="service" ref="userService"></property>
+</bean>
+
+<bean id="listUserAction" class="com.test.action.user.ListUserAction" scope="prototype">
+<property name="service" ref="userService"></property>
+</bean>
+
+<bean id="removeUserAction" class="com.test.action.user.RemoveUserAction" scope="prototype">
+<property name="service" ref="userService"></property>
+</bean>
+
+</beans>
