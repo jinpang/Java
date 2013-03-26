@@ -1,0 +1,432 @@
+Hadoop集群搭建详细说明
+
+*******************************************************************************
+主要步骤：
+1.修改主机名
+2.新建hadoop用户及安装sun jdk
+　　3.安装SSH，实现SSH无密码登陆
+4.安装和配置hadoop 
+5.运行任务
+6.集群搭建过程中遇到的问题及解决方案
+*******************************************************************************
+环境及插件要求：
+  Ubuntu 11.10系统，hadoop-1.0.2，jdk-6u30-linux-i586.bin
+*******************************************************************************
+搭建环境配置：
+	一个namenode节点：
+用户名：hadoop，主机名：namenode,IP：192.168.16.129，作用：namenode，master，jobtracker
+两个datanode节点：
+　　(1)用户名：hadoop，主机名：datanode1，IP：192.168.16.131，作用：datanode，slave，tasktracker
+(2)用户名：hadoop，主机名：datanode2，IP：192.168.16.132，作用：datanode，slave，tasktracker
+注：三台电脑用户名务必保持一致，该三个用户可以是root用户，也可以不是root用户，如果不是root用户则需要将此用户权限改为root用户权限，否则后面配置文件不能修改。在此文章中，采用新建用户名为hadoop，然后将其修改为root用户权限，具体修改方法后面会提到。
+*******************************************************************************
+
+1 修改主机名
+在/etc/hosts文件里面修改（三台机器都要修改），具体操作如下：
+hadoop@namenode:~$ nano /etc/hosts，打开文件在127.0.1.1  ubuntu后添加
+192.168.16.129 namenode
+192.168.16.131 datanode1
+192.168.16.132 datanode2
+hadoop@namenode:~$ nano /etc/hostname，打开文件后分别修改各个机器主机名，分别修改为：namenode、datanode1、datanode2.
+注：此次打开文件可以用vi、vim、nano、sudo gedit，个人建议尽量不使用sudo gedit，因为此命令需要在root权限下才可使用，并且系统开机时间长了此命令就不好用了，有时需要重启后才可使用。
+
+2新建hadoop用户及安装sun jdk(三台机器都要进行安装)
+2.1分别使用以下命令进行添加hadoop组和hadoop用户。
+hadoop@namenode:~$ sudo addgroup hadoop
+hadoop@namenode:~$ sudo adduser --ingroup hadoop hadoop
+然后将hadoop用户权限改为root权限就可以执行sudo gedit命令打开文件进行配置，修改权限操作为
+root@ubuntu : nano/etc/sudoers打开修改权限的文件，在
+root  ALL=(ALL:ALL) ALL下面添加
+hadoop  ALL=(ALL:ALL) ALL
+然后保存退出。
+2.2 在ubuntu中安装jdk
+    在/usr/lib下新建一个jvm包，将jdk-6u30-linux-i586.bin移动到/usr/lib/jvm中，然后运行
+    root@ubuntu :/usr/lib/jvm chmod 777 ./jdk-6u30-linux-i586.bin
+    root@ubuntu :/usr/lib/jvm ./jdk-6u30-linux-i586.bin
+    此时jdk就安装成了，接着就是配置jdk了。 
+2.3 配置jdk
+    root@ubuntu :/usr/lib/jvm# nano /etc/profile打开profile文件，在文件最后添加
+    export JAVA_HOME=/usr/lib/jvm/jdk1.6.0_30  
+    export JRE_HOME=/usr/lib/jvm/jdk1.6.0_30/jre  
+    export CLASSPATH=.:$JAVA_HOME/lib:$JRE_HOME/lib:$CLASSPATH    
+    export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$JAVA_HOME:$PATH  
+配置完重启就可以了，重启后可以用java或者javac查看是否安装成功，也可以用java -version查看安装的java版本。 
+
+3 安装SSH实现三台机器间无密码登陆（三台机器都要配置），具体操作如下：
+3.1 在每台机器上都使用以下命令安装ssh
+	hadoop@namenode:~$ sudo ssh apt-get openssh-server
+ 	hadoop@namenode:~$ ssh-keygen
+	hadoop@namenode:~$ mkdir .ssh
+	三台机器都安装好ssh后，下面公钥id_rsa.pub的复制和配置才是ssh配置中最重要的部分，在此先要给大家讲清公钥和私钥，理解了这些配置就容易了。例如我们现在有两台机器A和B，根据上面的方法只在A上安装ssh，接着进入.ssh这个文件夹我们会发现只有两个文件id_rsa.pub（公钥）、id_rsa（私钥），接着将A的公钥复制到A的公钥授权文件authorized_keys里面，下次当A连接B时就可以无密码登陆B。如果B要无密码登陆A只需要按以上步骤在B上进行一遍就可以了。
+3.2 在每台机器上配置ssh无密码登陆
+	（1）将namenode公钥分别复制到datanode1和datanode2节点上，此步骤在namenode机器上进行，具体如下：
+	hadoop@namenode:~$ scp id_rsa.pub hadoop@datanode1:/home/hadoop/.ssh/namenode_id_rsa.pub
+	hadoop@namenode:~$ scp id_rsa.pub hadoop@datanode1:/home/hadoop/.ssh/namemode_id_rsa.pub
+	（注：上面两个命令中datanode1_id_rsa.pub和datanode1_id_rsa.pub是自己命名的，因为scp这个命令将namenode上的公钥分别传到datanode1和datanode2上时，如果对方的接收文件分别为对方的公钥，则namenode的公钥会覆盖datanode1和datanode2的公钥，这样datanode1和datanode2的公钥就没有了，后面如果要进行datanode1和datanode2来连接namenode就无法连接了，因为它们的公钥现在已经是namenode的公钥了。这一块在网上很多hadoop集群搭建文件里面都未提到而自己却为此花费了很长时间去研究，因为自己以前就是通过覆盖的方法进行复制的，最后导致不能成功进行ssh无密码连接。所以，此处需要大家特别注意。）
+	（2）将datanode1的公钥分别复制到namenode和datanode2，此步骤在datanode1机器上进行，具体操作如下：
+	hadoop@namenode:~$ scp id_rsa.pub hadoop@namenode:/home/hadoop/.ssh/datanode1_id_rsa.pub
+	hadoop@namenode:~$ scp id_rsa.pub hadoop@datanode2:/home/hadoop/.ssh/datanode1_id_rsa.pub
+	（3）将datanode2的公钥分别复制到namenode和datanode1，此步骤在datanode2机器上进行，具体操作如下：
+	hadoop@namenode:~$ scp id_rsa.pub hadoop@namenode:/home/hadoop/.ssh/datanode2_id_rsa.pub
+	hadoop@namenode:~$ scp id_rsa.pub hadoop@datanode2:/home/hadoop/.ssh/datanode2_id_rsa.pub
+	（4）以上三步分别在三台机器上完成后，然后又进入namenode机器，将namenode、datanode1和datanode2刚才复制过来的公私分别导入到namenode机器的公钥授权文件authorized_keys里面，具体操作如下：
+	hadoop@namenode:~$ cd .ssh
+hadoop@namenode:~/.ssh$ cat id_rsa.pub >> authorized_keys
+hadoop@namenode:~/.ssh$ cat datanode1_id_rsa.pub >> authorized_keys
+hadoop@namenode:~/.ssh$ cat datanode2_id_rsa.pub >> authorized_keys
+（5）进入datanode1机器将三个公钥分别导入到datanode1公钥授权文件里面，具体操作如下：
+hadoop@namenode:~$ cd .ssh
+hadoop@namenode:~/.ssh$ cat id_rsa.pub >> authorized_keys
+hadoop@namenode:~/.ssh$ cat namenode_id_rsa.pub >> authorized_keys
+hadoop@namenode:~/.ssh$ cat datanode2_id_rsa.pub >> authorized_keys
+（6）进入datanode2机器将三个公钥分别导入到datanode2公钥授权文件里面，具体操作如下：
+hadoop@namenode:~$ cd .ssh
+hadoop@namenode:~/.ssh$ cat id_rsa.pub >> authorized_keys
+hadoop@namenode:~/.ssh$ cat namenode_id_rsa.pub >> authorized_keys
+hadoop@namenode:~/.ssh$ cat datanode1_id_rsa.pub >> authorized_keys
+进行完以上操作，下面就可以进行三台机器之间无密码登陆了，可以在三台机器上分别通过
+ssh namenode
+ssh datanode1
+ssh datanode2
+	命令进行无密码连接测试。
+
+4 安装和配置hadoop
+	此步先在namenode机器上安装和配置好后分别复制给datanode1和datanode2即可，如何复制后面会有详细说明。我们采用hadoop-1.0.2版本，可以去apache官网下载，下载地址为http://www.apache.org。下载完成后解压到/home/hadoop/hadoop里面，具体操作如下：
+4.1 hadoop安装
+先将压缩文件下载到/home/hadoop/hadoop里面，然后解压
+hadoop@namenode:~$ cd /home/hadoop/hadoop
+hadoop@namenode:~$ tar xvf hadoop-1.0.2-bin.tar.gz /home/hadoop/hadoop
+hadoop@namenode:~$ cd
+hadoop@namenode:~$ chown -R hadoop:hadoop hadoop(更改hadoop所有权)
+4.2 hadoop配置
+（1）配置hadoop-env.sh
+hadoop@namenode:~$ cd /home/hadoop/hadoop
+hadoop@namenode:~/hadoop$ cd hadoop-1.0.2/
+hadoop@namenode:~/hadoop/hadoop-1.0.2$ cd conf
+hadoop@namenode:~/hadoop/hadoop-1.0.2/conf$ nano hadoop-env.sh
+打开hadoop-env.sh文件后在其中
+将：  # export JAVA_HOME=/usr/lib/j2sdk1.5-sun
+改为：export JAVA_HOME=/usr/lib/jvm/jdk1.6.0_30
+（2）配置core-site.xml
+切换到/home/hadoop/hadoo/hadoop-1.0.2/conf,打开core-site.xml文件，在其中添加如下文件：
+<configuration>
+<property>
+  <name>fs.default.name</name>
+  <value>hdfs://namenode:9000</value>
+</property>
+<property>
+  <name>hadoop.tmp.dir</name>
+  <value>/home/hadoop/tmp</value>
+</property>
+-- 配置第二名称节点
+<property>
+  <name>fs.checkpoint.dir</name>
+  <value>/home/hadoop/secondname</value> 
+</property>
+-- 设置回收站保留时间
+<property>
+  <name>fs.trash.interval</name>
+  <value>10080</value>
+  <description>
+      Number of minutes between trash checkpoints. If zero, the trash feature is disabled
+  </description>
+</property>
+</configuration>
+(3)配置 hdfs-site.xml
+切换到/home/hadoop/hadoo/hadoop-1.0.2/conf,打开hdfs-site.xml文件，在其中添加如下文件：
+<configuration>
+<property>
+<name>dfs.name.dir</name>
+<value>/home/hadoop/name</value>
+</property> 
+<property>
+<name>dfs.data.dir</name>
+<value>/home/hadoop/data</value>
+</property>
+<property>
+<name>dfs.replication</name>
+<value>2</value>
+</property> 
+-- NameNode HTTP状态监视地址
+<property>
+<name>dfs.http.address</name>
+<value>localhost:50070</value>
+</property> 
+-- SecondaryNameNode HTTP状态监视地址
+<property>
+<name>dfs.secondary.http.address</name>
+<value>localhost2:50070</value>
+</property> 
+<!-这里需要特别的注意，一定要把这个dfs.permissions 设为false，否则在跑hadoop_web_1.3项目时会报权限错误， 还有hadoop用户要最高权限-
+<property>
+	<name>dfs.permissions</name>
+	<value>false</value>
+</property>
+</configuration>
+(4) 配置mapred-site.xml
+切换到/home/hadoop/hadoo/hadoop-1.0.2/conf,打开mapred-site.xml文件，在其中添加如下文件
+<configuration>
+<property>
+<name>mapred.local.dir</name>
+<value>/home/hadoop/temp</value>
+</property> 
+<property>
+<name>mapred.job.tracker</name>
+<value>namenode:9001</value>
+</property> 
+-- 每个job的map任务数
+<property>
+<name>mapred.map.tasks</name>
+<value>7</value>
+</property> 
+-- 每一个tasktracker同时运行的map任务数为2
+<property>
+<name>mapred.tasktracker.map.tasks.maximum</name>
+<value>2</value>
+</property> 
+-- 每一个tasktracker同时运行的reduce任务数为4
+<property>
+<name>mapred.tasktracker.reduce.tasks.maximum
+</name>
+<value>4</value>
+</property> 
+-- jvm虚拟机最大内存
+<property>
+  <name>mapred.child.java.opts</name>
+  <value>-Xmx1024m</value>
+</property>
+</configuration>
+（5）格式化namenode
+hadoop@namenode:~/hadoop/hadoop-1.0.2 $ bin/hadoop namenode -format
+4.3 分别复制hadoop配置文件并启动各个守护进程
+在namenode机器上分别将刚才配置好的文件复制到datanode1和datanode2机器上，具体操作如下：
+hadoop@namenode:~/hadoop/hadoop-1.0.2/conf$ cd ..
+hadoop@namenode:~/hadoop/hadoop-1.0.2$ cd ..
+hadoop@namenode:~/hadoop$ scp hadoop-1.0.2 hadoop@datanode1:/home/hadoop/hadoop
+hadoop@namenode:~/hadoop$ scp hadoop-1.0.2 hadoop@datanode2:/home/hadoop/hadoop
+然后在namenode机器上启动所有守护进程：
+hadoop@namenode:~/hadoop/hadoop-1.0.2$ bin/start-all.sh
+在namenode机器查看启动的守护进程如下：
+hadoop@namenode:~$ jps
+12749 JobTracker
+14353 Jps
+12369 NameNode
+13942
+然后在namenode机器上进入datanode1机器查看启动的守护进程如下:
+hadoop@namenode:~$ ssh hadoop@datanode1
+hadoop@datanode1:~$ jps
+531 TaskTracker
+32697 DataNode
+3229 Jps
+然后在datanode1机器上进入datanode1机器查看启动的守护进程如下:
+hadoop@datanode1:~$ ssh datanode2
+jhadoop@datanode2:~$ jps
+12322 DataNode
+12520 TaskTracker
+14619 Jps
+
+5 运行任务
+	进入namenode机器，运行job任务前先要关闭防火墙，具体操作如下：
+hadoop@namenode:~$ cd /home/hadoop/hadoop/hadoop-1.0.2/
+hadoop@namenode:~/hadoop/hadoop-1.0.2$ bin/hadoop dfsadmin -safemode leave
+	运行一个job任务，具体操作如下：
+hadoop@namenode:~/hadoop/hadoop-1.0.2$ cd
+hadoop@namenode:~$ mkdir input
+hadoop@namenode:~$ cd input
+hadoop@namenode:~/input$ echo "hello world" > text1.txt
+hadoop@namenode:~/input$ echo "hello hadoop world" > text2.txt
+hadoop@namenode:~/input$ cd
+hadoop@namenode:~$ cd /home/hadoop/hadoop/hadoop-1.0.2/
+hadoop@namenode:~/hadoop/hadoop-1.0.2$ bin/hadoop dfs -put input in
+hadoop@namenode:~/hadoop/hadoop-1.0.2$ bin/hadoop jar hadoop-examples-1.0.2.jar wordcount in out
+job程序开始运行，可以通过以下程序查看具体运行过程和结果，也可通过浏览器查看，具体网址为：http://192.168.16.129:50030和http://192.168.16.129:50070 
+hadoop@namenode:~/hadoop/hadoop-1.0.2$ bin/hadoop dfs –cat out/*
+hadoop@namenode:~/hadoop/hadoop-1.0.2$ bin/hadoop dfs –get out output
+hadoop@namenode:~/hadoop/hadoop-1.0.2$ cat output/*
+
+6集群搭建过程中遇到的问题及解决方案
+6.1 Name node is in safe mode.
+运行hadoop程序时，有时候会报以下错误： 
+org.apache.hadoop.dfs.SafeModeException: Cannot delete /user/hadoop/input. Name node is in safe mode.
+解决方案：
+Name node is in safe mode说明Hadoop的NameNode处在安全模式下，那什么是Hadoop的安全模式呢？ 
+在分布式文件系统启动的 时候，开始的时候会有安全模式，当分布式文件系统处于安全模式的情况下，文件系统中的内容不允许修改也不允许删除，直到安全模式结束。安 全模式主要是为了系统启动的时候检查各个DataNode上数据块的有效性，同时根据策略必要的复制或者删除部分数据块。运行期通过命令也可以进入安全模式。在实践过程中，系统启动的时候去 修改和删除文件也会有安全模式不允许修改的出错提示，只需要等待一会儿即可 。 
+    现在就清楚了，那现在要解决这个问题，我想让Hadoop不处在safe mode 模式下，能不能不用等，直 接解决呢？答案是可以的，只要在Hadoop的目录下输入： 
+bin/hadoop dfsadmin -safemode leave
+用户可以通过dfsadmin -safemode value   来操作安全模式，参数value的说明如下：
+enter - 进入安全模式
+leave - 强制NameNode离开安全模式
+get -   返回安全模式是否开启的信息
+wait - 等待，一直到安全模式结束。
+6.2 删除home下面的用户文件夹
+解决方案：
+删除文件夹要加：sudo rm -rd /home/你要删的文件夹
+6.3 Warning: $HADOOP_HOME is deprecated.
+解决方案：
+添加export HADOOP_HOME_WARN_SUPPRESS=TRUE 到 hadoop-env.sh  中注意要添加到集群中每一个节点中。
+原因： Hadoop 在bin/hadoop-config.sh 中对HADOOP_HOME 进行了判断
+判断发生的地方：
+# the root of the Hadoop installation
+export HADOOP_PREFIX=`dirname "$this"`/..
+export HADOOP_HOME=${HADOOP_PREFIX}
+报出错误的地方： bin /hadoop
+if [ "$HADOOP_HOME_WARN_SUPPRESS" == "" ] && [ "$HADOOP_HOME" != "" ]; then
+  echo "Warning: \$HADOOP_HOME is deprecated." 1>&2
+留着异常也无所谓不会对程序的正常运行产生影响。
+6.4 hadoop错误代码查询
+经常遇到的exception是：PipeMapRed.waitOutputThreads(): subprocess failed with code N
+"OS error code 1: Operation not permitted"
+"OS error code 2: No such file or directory"
+"OS error code 3: No such process"
+"OS error code 4: Interrupted system call"
+"OS error code 5: Input/output error"
+"OS error code 6: No such device or address"
+"OS error code 7: Argument list too long"
+"OS error code 8: Exec format error"
+"OS error code 9: Bad file descriptor"
+"OS error code 10: No child processes"
+"OS error code 11: Resource temporarily unavailable"
+"OS error code 12: Cannot allocate memory"
+"OS error code 13: Permission denied"
+"OS error code 14: Bad address"
+"OS error code 15: Block device required"
+"OS error code 16: Device or resource busy"
+"OS error code 17: File exists"
+"OS error code 18: Invalid cross-device link"
+"OS error code 19: No such device"
+"OS error code 20: Not a directory"
+"OS error code 21: Is a directory"
+"OS error code 22: Invalid argument"
+"OS error code 23: Too many open files in system"
+"OS error code 24: Too many open files"
+"OS error code 25: Inappropriate ioctl for device"
+"OS error code 26: Text file busy"
+"OS error code 27: File too large"
+"OS error code 28: No space left on device"
+"OS error code 29: Illegal seek"
+"OS error code 30: Read-only file system"
+"OS error code 31: Too many links"
+"OS error code 32: Broken pipe"
+"OS error code 33: Numerical argument out of domain"
+"OS error code 34: Numerical result out of range"
+"OS error code 35: Resource deadlock avoided"
+"OS error code 36: File name too long"
+"OS error code 37: No locks available"
+"OS error code 38: Function not implemented"
+"OS error code 39: Directory not empty"
+"OS error code 40: Too many levels of symbolic links"
+"OS error code 42: No message of desired type"
+"OS error code 43: Identifier removed"
+"OS error code 44: Channel number out of range"
+"OS error code 45: Level 2 not synchronized"
+"OS error code 46: Level 3 halted"
+"OS error code 47: Level 3 reset"
+"OS error code 48: Link number out of range"
+"OS error code 49: Protocol driver not attached"
+"OS error code 50: No CSI structure available"
+"OS error code 51: Level 2 halted"
+"OS error code 52: Invalid exchange"
+"OS error code 53: Invalid request descriptor"
+"OS error code 54: Exchange full"
+"OS error code 55: No anode"
+"OS error code 56: Invalid request code"
+"OS error code 57: Invalid slot"
+"OS error code 59: Bad font file format"
+"OS error code 60: Device not a stream"
+"OS error code 61: No data available"
+"OS error code 62: Timer expired"
+"OS error code 63: Out of streams resources"
+"OS error code 64: Machine is not on the network"
+"OS error code 65: Package not installed"
+"OS error code 66: Object is remote"
+"OS error code 67: Link has been severed"
+"OS error code 68: Advertise error"
+"OS error code 69: Srmount error"
+"OS error code 70: Communication error on send"
+"OS error code 71: Protocol error"
+"OS error code 72: Multihop attempted"
+"OS error code 73: RFS specific error"
+"OS error code 74: Bad message"
+"OS error code 75: Value too large for defined data type"
+"OS error code 76: Name not unique on network"
+"OS error code 77: File descriptor in bad state"
+"OS error code 78: Remote address changed"
+"OS error code 79: Can not access a needed shared library"
+"OS error code 80: Accessing a corrupted shared library"
+"OS error code 81: .lib section in a.out corrupted"
+"OS error code 82: Attempting to link in too many shared libraries"
+"OS error code 83: Cannot exec a shared library directly"
+"OS error code 84: Invalid or incomplete multibyte or wide character"
+"OS error code 85: Interrupted system call should be restarted"
+"OS error code 86: Streams pipe error"
+"OS error code 87: Too many users"
+"OS error code 88: Socket operation on non-socket"
+"OS error code 89: Destination address required"
+"OS error code 90: Message too long"
+"OS error code 91: Protocol wrong type for socket"
+"OS error code 92: Protocol not available"
+"OS error code 93: Protocol not supported"
+"OS error code 94: Socket type not supported"
+"OS error code 95: Operation not supported"
+"OS error code 96: Protocol family not supported"
+"OS error code 97: Address family not supported by protocol"
+"OS error code 98: Address already in use"
+"OS error code 99: Cannot assign requested address"
+"OS error code 100: Network is down"
+"OS error code 101: Network is unreachable"
+"OS error code 102: Network dropped connection on reset"
+"OS error code 103: Software caused connection abort"
+"OS error code 104: Connection reset by peer"
+"OS error code 105: No buffer space available"
+"OS error code 106: Transport endpoint is already connected"
+"OS error code 107: Transport endpoint is not connected"
+"OS error code 108: Cannot send after transport endpoint shutdown"
+"OS error code 109: Too many references: cannot splice"
+"OS error code 110: Connection timed out"
+"OS error code 111: Connection refused"
+"OS error code 112: Host is down"
+"OS error code 113: No route to host"
+"OS error code 114: Operation already in progress"
+"OS error code 115: Operation now in progress"
+"OS error code 116: Stale NFS file handle"
+"OS error code 117: Structure needs cleaning"
+"OS error code 118: Not a XENIX named type file"
+"OS error code 119: No XENIX semaphores available"
+"OS error code 120: Is a named type file"
+"OS error code 121: Remote I/O error"
+"OS error code 122: Disk quota exceeded"
+"OS error code 123: No medium found"
+"OS error code 124: Wrong medium type"
+"OS error code 125: Operation canceled"
+"OS error code 126: Required key not available"
+"OS error code 127: Key has expired"
+"OS error code 128: Key has been revoked"
+"OS error code 129: Key was rejected by service"
+"OS error code 130: Owner died"
+"OS error code 131: State not recoverable"
+"MySQL error code 132: Old database file"
+"MySQL error code 133: No record read before update"
+"MySQL error code 134: Record was already deleted (or record file crashed)"
+"MySQL error code 135: No more room in record file"
+"MySQL error code 136: No more room in index file"
+"MySQL error code 137: No more records (read after end of file)"
+"MySQL error code 138: Unsupported extension used for table"
+"MySQL error code 139: Too big row"
+"MySQL error code 140: Wrong create options"
+"MySQL error code 141: Duplicate unique key or constraint on write or update"
+"MySQL error code 142: Unknown character set used"
+"MySQL error code 143: Conflicting table definitions in sub-tables of MERGE table"
+"MySQL error code 144: Table is crashed and last repair failed"
+"MySQL error code 145: Table was marked as crashed and should be repaired"
+"MySQL error code 146: Lock timed out; Retry transaction"
+"MySQL error code 147: Lock table is full; Restart program with a larger locktable"
+"MySQL error code 148: Updates are not allowed under a read only transactions"
+"MySQL error code 149: Lock deadlock; Retry transaction"
+"MySQL error code 150: Foreign key constraint is incorrectly formed"
+"MySQL error code 151: Cannot add a child row"
+"MySQL error code 152: Cannot delete a parent row"
+
+
+
+下面为需要修改的配置文件：
+ 
