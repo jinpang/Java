@@ -1,14 +1,14 @@
 git study
-1.����username
+1.配置username
 git config --global user.name "jinpang"
 
-2.����email
+2.配置email
 git config --global user.email jingzhangp@gmail.com
 
-3.���� SSH public key,������github��������ע�ᡣÿ̨�ͻ���keyֻ������һ�Σ�Ȼ�󱸷��������ɡ�
+3.生成 SSH public key,用于在github服务器端注册。每台客户端key只需生成一次，然后备份起来即可。
 cd ~/.ssh
-ssh-keygen -t rsa -C "jingzhongp@gamil.com" //����step 4���õ�email��һ·�س�
-ls ~/.ssh //�ῴ��id_rsa.pub ��������ݾ���SSH public key��
+ssh-keygen -t rsa -C "jingzhongp@gamil.com" //上述step 4配置的email，一路回车
+ls ~/.ssh //会看到id_rsa.pub 里面的内容就是SSH public key。
 
 4.initial project example
 mkdir test
@@ -19,45 +19,45 @@ git commit -m "initial commit"
 git  remote add origin git@github.com:jingzhongp/test.git
 git push origin master
 
-5.�ӷ�������¡һ�����ڵ���Ŀ
+5.从服务器克隆一个存在的项目
 git clone git@github.com:jingzhongp/test.git
-ע�⣺clone����Ĳ���url��Ҫ��private����url��Read-Only��HTTP Read-Only clone�����Ĵ���û���޸ķ�������Ȩ�ޡ�
+注意：clone后面的参数url需要用private里面url。Read-Only和HTTP Read-Only clone下来的代码没有修改服务器的权限。
 
-6.ͨ��ʹ�����̣�
-�ӷ�����ͬ�����룺
+6.通常使用流程：
+从服务器同步代码：
 git pull origin master
-������������һ��Readme��file
+往服务器增加一个Readme的file
 git add Readme
 git commit -a
 git push origin master
-�޸ĺ��file discard
+修改后的file discard
 git checkout Readme
 
 
-#���ӹ�Կ
+#添加公钥
 eval `ssh-agent`
 ssh-add /c/id_rsa
 
 
-#��¡����
+#克隆代码
 git clone
 
 
 
-#���ش���
+#下载代码
 git pull
 
-#�����ļ�
+#添加文件
 git add .
 
-#�ύ�޸�
-git commit -a -m "fsdlfjs"  #�������һЩ��Ϣ
+#提交修改
+git commit -a -m "fsdlfjs"  #随便输入一些信息
 
-#�ϴ�����
+#上传代码
 git push
 
-#ssh ����
+#ssh 连接
 ssh 9c5a912cba6b4f35b75069dec7ec9f21@cloudplatform-lgl.demo.com
 
-more content follow here:
+更多的内容：
 http://www.yuexuan.org/?p=1159
