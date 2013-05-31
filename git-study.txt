@@ -1,14 +1,14 @@
 git study
-1.ÅäÖÃusername
+1.ï¿½ï¿½ï¿½ï¿½username
 git config --global user.name "jinpang"
 
-2.ÅäÖÃemail
+2.ï¿½ï¿½ï¿½ï¿½email
 git config --global user.email jingzhangp@gmail.com
 
-3.Éú³É SSH public key,ÓÃÓÚÔÚgithub·şÎñÆ÷¶Ë×¢²á¡£Ã¿Ì¨¿Í»§¶ËkeyÖ»ĞèÉú³ÉÒ»´Î£¬È»ºó±¸·İÆğÀ´¼´¿É¡£
+3.ï¿½ï¿½ï¿½ï¿½ SSH public key,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½githubï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¢ï¿½á¡£Ã¿Ì¨ï¿½Í»ï¿½ï¿½ï¿½keyÖ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î£ï¿½È»ï¿½ó±¸·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¡ï¿½
 cd ~/.ssh
-ssh-keygen -t rsa -C "jingzhongp@gamil.com" //ÉÏÊöstep 4ÅäÖÃµÄemail£¬Ò»Â·»Ø³µ
-ls ~/.ssh //»á¿´µ½id_rsa.pub ÀïÃæµÄÄÚÈİ¾ÍÊÇSSH public key¡£
+ssh-keygen -t rsa -C "jingzhongp@gamil.com" //ï¿½ï¿½ï¿½ï¿½step 4ï¿½ï¿½ï¿½Ãµï¿½emailï¿½ï¿½Ò»Â·ï¿½Ø³ï¿½
+ls ~/.ssh //ï¿½á¿´ï¿½ï¿½id_rsa.pub ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ¾ï¿½ï¿½ï¿½SSH public keyï¿½ï¿½
 
 4.initial project example
 mkdir test
@@ -19,43 +19,45 @@ git commit -m "initial commit"
 git  remote add origin git@github.com:jingzhongp/test.git
 git push origin master
 
-5.´Ó·şÎñÆ÷¿ËÂ¡Ò»¸ö´æÔÚµÄÏîÄ¿
+5.ï¿½Ó·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¡Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Ä¿
 git clone git@github.com:jingzhongp/test.git
-×¢Òâ£ºcloneºóÃæµÄ²ÎÊıurlĞèÒªÓÃprivateÀïÃæurl¡£Read-OnlyºÍHTTP Read-Only cloneÏÂÀ´µÄ´úÂëÃ»ÓĞĞŞ¸Ä·şÎñÆ÷µÄÈ¨ÏŞ¡£
+×¢ï¿½â£ºcloneï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½urlï¿½ï¿½Òªï¿½ï¿½privateï¿½ï¿½ï¿½ï¿½urlï¿½ï¿½Read-Onlyï¿½ï¿½HTTP Read-Only cloneï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½Ş¸Ä·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¨ï¿½Ş¡ï¿½
 
-6.Í¨³£Ê¹ÓÃÁ÷³Ì£º
-´Ó·şÎñÆ÷Í¬²½´úÂë£º
+6.Í¨ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½Ì£ï¿½
+ï¿½Ó·ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ë£º
 git pull origin master
-Íù·şÎñÆ÷Ôö¼ÓÒ»¸öReadmeµÄfile
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Readmeï¿½ï¿½file
 git add Readme
 git commit -a
 git push origin master
-ĞŞ¸ÄºóµÄfile discard
+ï¿½Ş¸Äºï¿½ï¿½file discard
 git checkout Readme
 
 
-#Ìí¼Ó¹«Ô¿
+#ï¿½ï¿½ï¿½Ó¹ï¿½Ô¿
 eval `ssh-agent`
 ssh-add /c/id_rsa
 
 
-#¿ËÂ¡´úÂë
+#ï¿½ï¿½Â¡ï¿½ï¿½ï¿½ï¿½
 git clone
 
 
 
-#ÏÂÔØ´úÂë
+#ï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½
 git pull
 
-#Ìí¼ÓÎÄ¼ş
+#ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
 git add .
 
-#Ìá½»ĞŞ¸Ä
-git commit -a -m "fsdlfjs"  #Ëæ±ãÊäÈëÒ»Ğ©ĞÅÏ¢
+#ï¿½á½»ï¿½Ş¸ï¿½
+git commit -a -m "fsdlfjs"  #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»Ğ©ï¿½ï¿½Ï¢
 
-#ÉÏ´«´úÂë
+#ï¿½Ï´ï¿½ï¿½ï¿½ï¿½ï¿½
 git push
 
-#ssh Á¬½Ó
+#ssh ï¿½ï¿½ï¿½ï¿½
 ssh 9c5a912cba6b4f35b75069dec7ec9f21@cloudplatform-lgl.demo.com
 
+more content follow here:
+http://www.yuexuan.org/?p=1159
