@@ -1,0 +1,139 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+
+import javax.swing.JTextArea;
+
+public class CodeCounter {
+  
+	static long normalLines = 0;//代码正常行数
+	static long commentLines = 0;//注释行数
+	static long whiteLines = 0;//空行数
+	static String str = "";
+	public static void main(String[] args) {
+		File f = new File("D:/Program Files/MyEclipse 6.0/WorkSpace1.5/ToolClass/src");//统计该目录下所有的以“.java”结束的文件行数
+		File[] codeFiles = f.listFiles();
+		/*for(File child : codeFiles){
+			if(child.getName().matches(".*\\.java$")) {
+				parse(child);
+			}
+		}*/
+		System.out.println(f.getName());
+		tree(f, 1);
+		
+		System.out.println("normalLines:" + normalLines);
+		System.out.println("commentLines:" + commentLines);
+		System.out.println("whiteLines:" + whiteLines);
+		System.out.println("allLines:" + (normalLines+commentLines+whiteLines));
+		
+	}
+	
+	public static void count(String file,JTextArea area) {
+		File f = new File(file);//统计该目录下所有的以“.java”结束的文件行数
+		File[] codeFiles = f.listFiles();
+		/*for(File child : codeFiles){
+			if(child.getName().matches(".*\\.java$")) {
+				parse(child);
+			}
+		}*/
+		System.out.println(f.getName());
+		area.append(f.getName());
+		area.append(tree(f, 1,area));
+		
+		System.out.println("normalLines:" + normalLines);
+		System.out.println("commentLines:" + commentLines);
+		System.out.println("whiteLines:" + whiteLines);
+		System.out.println("allLines:" + (normalLines+commentLines+whiteLines));
+		String str = "normalLines:" + normalLines+"\n"+"commentLines:" 
+		+ commentLines+"\n"+"whiteLines:" + whiteLines+"\n"+"allLines:" + (normalLines+commentLines+whiteLines);
+		area.append(str);
+	}
+	//统计 f 目录下（包括子目录）所有的以“.java”结尾文件的行数
+	private static void tree(File f, int level){
+		String preStr = "";
+		for(int i = 0; i < level; i++){
+			preStr += "  ";
+		}
+		
+		File []childs = f.listFiles();
+		
+		for(int i = 0; i<childs.length; i++){
+			if(childs[i].getName().matches(".*\\.java$")) {
+				parse(childs[i]);
+			}
+			System.out.println(preStr + childs[i].getName());
+			if(childs[i].isDirectory()){
+				tree(childs[i], level + 1);
+			}
+		}
+	}
+	//统计 f 目录下（包括子目录）所有的以“.java”结尾文件的行数
+	private static String tree(File f, int level, JTextArea area){
+		
+		String preStr = "";
+		for(int i = 0; i < level; i++){
+			preStr += "  ";
+		}
+		
+		File []childs = f.listFiles();
+		
+		for(int i = 0; i<childs.length; i++){
+			if(childs[i].getName().matches(".*\\.java$")) {
+				parse(childs[i]);
+			}
+			System.out.println(preStr + childs[i].getName());
+			//area.append("\n"+preStr + childs[i].getName());
+			str = str+preStr + childs[i].getName()+"\n";
+			if(childs[i].isDirectory()){
+				tree(childs[i], level + 1,area);
+			}
+		}
+		return str;
+	}
+	
+	//统计 f 目录下（不包括子目录） 所有的以".java"结尾的文件行数
+	private static void parse(File f) {
+		BufferedReader br = null;
+		boolean comment = false;
+		try {
+			br = new BufferedReader(new FileReader(f));
+			String line = "";
+			while((line = br.readLine()) != null) {
+				line = line.trim();
+				if(line.matches("^[\\s&&[^\\n]]*$")) {
+					whiteLines ++;
+				} else if (line.startsWith("/*") && !line.endsWith("*/")) {
+					commentLines ++;
+					comment = true;	
+				} else if (line.startsWith("/*") && line.endsWith("*/")) {
+					commentLines ++;
+				} else if (true == comment) {
+					commentLines ++;
+					if(line.endsWith("*/")) {
+						comment = false;
+					}
+				} else if (line.startsWith("//")) {
+					commentLines ++;
+				} else {
+					normalLines ++;
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if(br != null) {
+				try {
+					br.close();
+					br = null;
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+}
