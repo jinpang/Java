@@ -3,31 +3,37 @@ package com.jp.bz;
 import java.io.*;
 
 public class FileCopy {
+
 	FileInputStream FIS;
 	FileOutputStream FOS;
+	final int BUFFER_SIZE = 1024 * 5;
+	
 
-	public boolean copyFile(String src, String des) {
-		try {
-			FIS = new FileInputStream(src);
-			FOS = new FileOutputStream(des);
-			byte[] bt = new byte[1024];
-			int readNum = 0;
-			while ((readNum = FIS.read(bt)) != -1) {
-				FOS.write(bt, 0, bt.length);
-			}
-			FIS.close();
-			FOS.close();
-			return true;
-		} catch (Exception e) {
-			try {
-				FIS.close();
-				FOS.close();
-			} catch (IOException f) {
-				// TODO
-			}
-			return false;
-		} finally {
+	// 复制文件
+	public void copyFile(String sourceFile, String targetFile)
+			throws IOException {
+		// 新建文件输入流并对它进行缓冲
+		FileInputStream input = new FileInputStream(sourceFile);
+		BufferedInputStream inBuff = new BufferedInputStream(input);
+
+		// 新建文件输出流并对它进行缓冲
+		FileOutputStream output = new FileOutputStream(targetFile);
+		BufferedOutputStream outBuff = new BufferedOutputStream(output);
+
+		// 缓冲数组
+		byte[] b = new byte[BUFFER_SIZE];
+		int len;
+		while ((len = inBuff.read(b)) != -1) {
+			outBuff.write(b, 0, len);
 		}
+		// 刷新此缓冲的输出流
+		outBuff.flush();
+
+		// 关闭流
+		inBuff.close();
+		outBuff.close();
+		output.close();
+		input.close();
 	}
 
 	/**
@@ -59,7 +65,7 @@ public class FileCopy {
 			if (lastPointIndex >= 0) {
 				return filename.substring(lastSeparatorIndex + 1,
 						lastPointIndex);
-			}else{
+			} else {
 				return filename.substring(lastSeparatorIndex + 1);
 			}
 
