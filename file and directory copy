@@ -3,7 +3,7 @@ package com.jp.bz;
 import java.io.*;
 
 public class FileCopy {
-  FileInputStream FIS;
+	FileInputStream FIS;
 	FileOutputStream FOS;
 
 	public boolean copyFile(String src, String des) {
@@ -29,38 +29,52 @@ public class FileCopy {
 		} finally {
 		}
 	}
-	
+
 	/**
-	 * 获取文件后缀  如：.java  .jsp
+	 * 获取文件后缀 如：.java .jsp
+	 * 
 	 * @param filename
 	 * @return
 	 */
-	public String getSuffix(String filename){
-		if(filename != null){
-			return filename.substring(filename.lastIndexOf("."));
+	public String getSuffix(String filename) {
+		if (filename != null) {
+			int index = filename.lastIndexOf(".");
+			if (index >= 0) {
+				return filename.substring(filename.lastIndexOf("."));
+			}
 		}
 		return null;
 	}
-	
+
 	/**
-	 * 获取文件名，不包括后缀   test   
+	 * 获取文件名，不包括后缀 test
+	 * 
 	 * @param filename
 	 * @return
 	 */
-	public String getFilename(String filename){
-		if(filename != null){
-			return filename.substring(filename.lastIndexOf(File.separator) + 1, filename.indexOf("."));
+	public String getFilename(String filename) {
+		if (filename != null) {
+			int lastPointIndex = filename.lastIndexOf(".");
+			int lastSeparatorIndex = filename.lastIndexOf(File.separator);
+			if (lastPointIndex >= 0) {
+				return filename.substring(lastSeparatorIndex + 1,
+						lastPointIndex);
+			}else{
+				return filename.substring(lastSeparatorIndex + 1);
+			}
+
 		}
 		return null;
 	}
-	
+
 	/**
-	 * 获取文件名，包括后缀   test.java  
+	 * 获取文件名，包括后缀 test.java
+	 * 
 	 * @param filename
 	 * @return
 	 */
-	public String getFilenameIncludeSuffix(String filename){
-		if(filename != null){
+	public String getFilenameIncludeSuffix(String filename) {
+		if (filename != null) {
 			return filename.substring(filename.lastIndexOf(File.separator) + 1);
 		}
 		return null;
@@ -76,7 +90,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 public class DirectoryCopy {
-  FileInputStream FIS;
+	FileInputStream FIS;
 	FileOutputStream FOS;
 	String beforeSuffix = ".java";
 	String afterSuffix = ".j";
@@ -149,7 +163,7 @@ public class DirectoryCopy {
 	public static void main(String[] args) {
 		DirectoryCopy directoryCopy = new DirectoryCopy();
 		String src = "D:\\test\\BD";
-		String dest = "D:\\test\\BD2";
+		String dest = "D:\\test\\xjc";
 		String beforeSuffix = ".java";
 		String afterSuffix = ".j";
 
@@ -161,10 +175,11 @@ public class DirectoryCopy {
 			}
 		} else {
 		}
-		if (directoryCopy.copyDirectory(src, dest, afterSuffix, beforeSuffix)) {
+		if (directoryCopy.copyDirectory(src, dest, beforeSuffix, afterSuffix)) {
 			System.out.println("Directory Copy Successfully!");
 		} else {
 			System.out.println("Directory Copy error!");
 		}
 	}
 }
+
