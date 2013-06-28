@@ -1,0 +1,242 @@
+package com.randomgenerator;
+
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Random;
+
+import javax.swing.JTextArea;
+
+public class RandomGenerator {
+
+  private JTextArea jTextArea;
+	private int bitNum;
+	private int length;
+	private final static int RANDOM_SIZE = 10;
+
+	public RandomGenerator(JTextArea jTextArea, Integer bitNum, Integer length) {
+		this.jTextArea = jTextArea;
+		this.bitNum = bitNum;
+		this.length = length;
+	}
+
+	public static LinkedHashSet<String> getRandom(Integer length) {
+		if (length == null) {
+			return null;
+		}
+		LinkedHashSet<String> set = new LinkedHashSet<String>();
+		while (true) {
+			LinkedHashSet<Integer> tmp = generateRandomArray(RANDOM_SIZE);
+			set.add(getRandomStrFromSet(tmp));
+			if (set.size() >= length) {
+				break;
+			}
+		}
+		return set;
+	}
+	
+	public static String getRandom(LinkedHashSet<String> random) {
+		LinkedHashSet<String> set = random;
+		Iterator<String> iterator = set.iterator();
+		StringBuffer str = new StringBuffer();
+		int i = 0;
+		while (iterator.hasNext()) {
+			str.append(iterator.next() + "\n");
+		}
+		return str.toString();
+	}
+
+	/**
+	 * 随机产生指定的范围不重复的集合
+	 * 
+	 * @param size
+	 * @return
+	 */
+	public static LinkedHashSet<Integer> generateRandomArray(int size) {
+
+		LinkedHashSet<Integer> set = new LinkedHashSet<Integer>(); // 集合是没有重复的值,LinkedHashSet是有顺序不重复集合,HashSet则为无顺序不重复集合
+		Integer num = size;
+		Integer range = size;
+		Random ran = new Random();
+		while (set.size() < num) {
+			Integer tmp = ran.nextInt(range); // 0-51之间随机选一个数
+			set.add(tmp);// 直接加入，当有重复值时，不会往里加入，直到set的长度为52才结束
+		}
+		return set;
+	}
+
+	public static String getRandomStrFromSet(LinkedHashSet<Integer> set) {
+		if (set != null && set.size() > 0) {
+			Iterator<Integer> iterator = set.iterator();
+			StringBuffer buffer = new StringBuffer();
+			while (iterator.hasNext()) {
+				buffer.append(iterator.next());
+			}
+			int index = new Random().nextInt(buffer.length());
+			buffer.deleteCharAt(index);
+			String str = buffer.toString();
+			return str;
+		}
+		return null;
+	}
+}
+
+
+package com.randomgenerator;
+
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.LinkedHashSet;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+
+public class RandomGeneratorUI extends JFrame implements ActionListener {
+  private JLabel jLabel1;
+	private JTextField jTextField1;
+	private JLabel jLabel2;
+	private JTextField jTextField2;
+	private JButton jButton;
+	private JButton jButton2;
+	private JTextArea jTextArea;
+	private JPanel panelOutput;
+
+	public RandomGeneratorUI() {
+		super();
+		this.setSize(600, 600);
+		this.getContentPane().setLayout(null);
+		double width = Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+		double height = Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+		this.setLocation((int) (width - this.getWidth()) / 2,
+				(int) (height - this.getHeight()) / 2);
+		// this.add(getJLabel(), null);
+		// this.add(getJTextField(), null);
+		this.add(getJLabel2(), null);
+		this.add(getJTextField2(), null);
+		jTextArea = getJTextArea();
+		panelOutput = getJPanel();
+		JScrollPane js = new JScrollPane(jTextArea);
+		js.setBounds(160, 130, 300, 300);
+		panelOutput.add(js);
+		// this.add(getJTextArea(), null);
+		this.add(js, null);
+		// this.add(panelOutput, null);
+		this.add(getJButton(), null);
+//		this.add(getJButton2(), null);
+		this.setTitle("随机数生成工具");
+		jButton.addActionListener(this);
+	}
+
+	private JLabel getJLabel() {
+		if (jLabel1 == null) {
+			jLabel1 = new JLabel();
+			jLabel1.setBounds(34, 49, 100, 18);
+			jLabel1.setText("随机数的长度:");
+		}
+		return jLabel1;
+	}
+
+	private JLabel getJLabel2() {
+		if (jLabel2 == null) {
+			jLabel2 = new JLabel();
+			jLabel2.setBounds(34, 80, 120, 18);
+			jLabel2.setText("生成多少个随机数:");
+		}
+		return jLabel2;
+	}
+
+	private JTextField getJTextField() {
+		if (jTextField1 == null) {
+			jTextField1 = new JTextField();
+			jTextField1.setToolTipText("随机数的长度");
+			jTextField1.setBounds(160, 49, 160, 20);
+		}
+		return jTextField1;
+	}
+
+	private JTextField getJTextField2() {
+		if (jTextField2 == null) {
+			jTextField2 = new JTextField();
+			jTextField2.setToolTipText("生成多少个随机数度");
+			jTextField2.setBounds(160, 80, 160, 20);
+		}
+		return jTextField2;
+	}
+
+	private JTextArea getJTextArea() {
+		if (jTextArea == null) {
+			jTextArea = new JTextArea();
+			jTextArea.setBounds(160, 130, 300, 300);
+			jTextArea.setLineWrap(true);
+			jTextArea.setAutoscrolls(true);
+			jTextArea.setToolTipText("随机数显示区");
+		}
+		return jTextArea;
+	}
+
+	private JPanel getJPanel() {
+		if (panelOutput == null) {
+			panelOutput = new JPanel();
+			panelOutput.setBounds(160, 130, 300, 300);
+		}
+		return panelOutput;
+	}
+
+	private JButton getJButton() {
+		if (jButton == null) {
+			jButton = new JButton();
+			jButton.setBounds(160, 450, 71, 27);
+			jButton.setText("生成");
+		}
+		return jButton;
+	}
+
+	private JButton getJButton2() {
+		if (jButton2 == null) {
+			jButton2 = new JButton();
+			jButton2.setBounds(250, 450, 71, 27);
+			jButton2.setText("导出");
+		}
+		return jButton2;
+	}
+	
+	public static void main(String[] args) {
+		RandomGeneratorUI w = new RandomGeneratorUI();
+		w.setVisible(true);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+	 */
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() == jButton) {
+			try {
+				jTextArea.setText("");
+				Integer length = Integer.valueOf(jTextField2.getText().trim());
+				LinkedHashSet<String> set = RandomGenerator.getRandom(length);
+				jTextArea.setText(RandomGenerator.getRandom(set));
+				jTextArea.setCaretPosition(jTextArea.getText().length());
+			} catch (NumberFormatException e1) {
+				jTextArea.setText("请输入整型数！");
+				jTextField2.setText("");
+			}
+		}
+		if (e.getSource() == jButton2) {
+			try {
+				String str = jTextArea.getText();
+			} catch (NumberFormatException e1) {
+				e1.printStackTrace();
+			}
+		}
+	}
+
+}
